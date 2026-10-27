@@ -11,8 +11,14 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: unzip -o ./*.zip
-      - run: cd EMBERSMP && mvn -B clean package
-      - env:
+      - name: Build and release
+        env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: gh release create build-${{ github.run_number }} EMBERSMP/target/EMBERSMP.jar --title "EMBERSMP jar" --notes "Built jar"
+        run: |
+          unzip -o ./*.zip
+          POM=$(find . -name pom.xml | head -1)
+          echo "Using $POM"
+          mvn -B -f "$POM" clean package
+          JAR=$(find . -path "*target*" -name "*.jar" ! -name "original-*" | head -1)
+          echo "Jar: $JAR"
+          gh release create build-${{ github.run_number }} "$JAR" --title "EMBERSMP jar" --notes "Built jar"
